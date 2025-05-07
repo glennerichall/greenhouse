@@ -15,8 +15,6 @@ struct controller {
 
         virtual void actualize()  = 0;
 
-        virtual void print(display&) = 0;
-
         virtual void update();
 
         virtual ~controller() = default;

@@ -5,8 +5,8 @@
 #ifndef HUMIDITY_H
 #define HUMIDITY_H
 
-#include <controller.h>
-#include <assert.h>
+#include <etl/error_handler.h>
+#include "controller.h"
 
 #define HEATER true
 #define COOLER false
@@ -32,7 +32,7 @@ struct bang_bang_behavior<COOLER> {
 template<
         uint8_t inport,
         uint8_t outport,
-        bool type
+        bool type = HEATER
 >
 struct simple_bang_bang : controller {
 private:
@@ -83,7 +83,7 @@ public:
     }
 
     void actualize() override {
-        assert(initialized && "Uninitialized controller");
+        ETL_ASSERT (initialized, "Uninitialized controller");
         if (is_below() && is_off()) {
             turn_on();
         } else if (is_above() && is_on()) {
@@ -91,11 +91,11 @@ public:
         }
     }
 
-    bool is_heater() const {
+    bool ETL_CONSTEXPR17 is_heater() const {
         return type == HEATER;
     }
 
-    bool is_cooler() const {
+    bool ETL_CONSTEXPR17 is_cooler() const {
         return type == COOLER;
     }
 
@@ -121,10 +121,6 @@ public:
 
     int get_target_high(int target) const {
         return high;
-    }
-
-    void print(display &display) override {
-
     }
 };
 

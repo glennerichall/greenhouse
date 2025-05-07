@@ -5,11 +5,15 @@
 #ifndef GREENHOUSE_DISPLAY_H
 #define GREENHOUSE_DISPLAY_H
 
+struct controller;
+
 struct display {
+public:
+    virtual void print_state(const controller &ctrl) = 0;
 
-    virtual void title(const char* title) = 0;
+    virtual void initialize() = 0;
 
-    virtual void value() = 0;
+    virtual ~display() = default;
 };
 
 #endif //GREENHOUSE_DISPLAY_H

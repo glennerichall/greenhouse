@@ -5,5 +5,9 @@
 #include "controller_group.h"
 
 void controller_group::add(controller* controller) {
+    controllers.push_back(controller);
+}
+
+void controller_group::add(controller &&controller) {
 
 }

@@ -6,15 +6,16 @@
 #define CONTROLLER_H
 
 #include <Arduino.h>
+#include "display.h"
 
-    struct controller {
+struct controller {
         controller() = default;
 
         virtual void sense() = 0;
 
         virtual void actualize()  = 0;
 
-        virtual void display() = 0;
+        virtual void print(display&) = 0;
 
         virtual void update();
 

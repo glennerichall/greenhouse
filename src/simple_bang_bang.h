@@ -6,69 +6,63 @@
 #define HUMIDITY_H
 
 #include <controller.h>
+#include <assert.h>
 
-template<bool heatUp>
+#define HEATER true
+#define COOLER false
+
+template<bool type>
 struct bang_bang_behavior;
 
-// Specialization for heatUp = true (heating device)
 template<>
-struct bang_bang_behavior<true> {
-    static bool isBelow(int value, int low)   { return value < low; }
-    static bool isAbove(int value, int high)   { return value > high; }
+struct bang_bang_behavior<HEATER> {
+    static bool isBelow(int value, int low) { return value < low; }
+
+    static bool isAbove(int value, int high) { return value > high; }
 };
 
-// Specialization for heatUp = false (cooling device)
 template<>
-struct bang_bang_behavior<false> {
-    static bool isBelow(int value, int low)   { return value > low; /* ie -value < -low */}
-    static bool isAbove(int value, int high)   { return value < high; }
+struct bang_bang_behavior<COOLER> {
+    static bool isBelow(int value, int low) { return value > low; /* ie -value < -low */}
+
+    static bool isAbove(int value, int high) { return value < high; }
 };
+
 
 template<
-    uint8_t inport,
-    uint8_t outport,
-    bool heatUp
+        uint8_t inport,
+        uint8_t outport,
+        bool type
 >
 struct simple_bang_bang : controller {
 private:
-    enum STATE {
-        ON = HIGH,
-        OFF = LOW,
-    };
-
     int value{};
     int state{LOW};
     int high{0}, low{0};
+    const char *name{""};
+    bool initialized{false};
 
-    using behavior = bang_bang_behavior<heatUp>;
+    using behavior = bang_bang_behavior<type>;
 
-    bool isOff() {
-        return state == LOW;
+    bool is_above() {
+        return behavior::isAbove(value, high);
     }
 
-    bool isOn() {
-        return state == HIGH;
+    bool is_below() {
+        return behavior::isBelow(value, low);
     }
 
-    bool isAbove() {
-        return behavior::isAbove(value);
-    }
-
-    bool isBelow() {
-        return behavior::isBelow(value);
-    }
-
-    void setState(int value) {
+    void set_state(int value) {
         state = value;
         digitalWrite(outport, state);
     }
 
-    void turnOn() {
-        setState(ON);
+    void turn_on() {
+        set_state(HIGH);
     }
 
-    void turnOff() {
-        setState(OFF);
+    void turn_off() {
+        set_state(LOW);
     }
 
 public:
@@ -77,22 +71,67 @@ public:
         pinMode(inport, INPUT);
     }
 
+    void initialize(const char *name, int low, int high) {
+        this->name = name;
+        this->low = low;
+        this->high = high;
+        this->initialized = true;
+    }
+
     void sense() override {
         value = analogRead(inport);
     }
 
     void actualize() override {
-        if (isBelow() && isOff()) {
-            turnOn();
-        } else if (isAbove() && isOn()) {
-            turnOff();
+        assert(initialized && "Uninitialized controller");
+        if (is_below() && is_off()) {
+            turn_on();
+        } else if (is_above() && is_on()) {
+            turn_off();
         }
     }
 
-    void display() override {
+    bool is_heater() const {
+        return type == HEATER;
+    }
+
+    bool is_cooler() const {
+        return type == COOLER;
+    }
+
+    bool is_off() {
+        return state == LOW;
+    }
+
+    bool is_on() {
+        return state == HIGH;
+    }
+
+    void set_target_low(int target) {
+        low = target;
+    }
+
+    void set_target_high(int target) {
+        high = target;
+    }
+
+    int get_target_low(int target) const {
+        return low;
+    }
+
+    int get_target_high(int target) const {
+        return high;
+    }
+
+    void print(display &display) override {
 
     }
 };
 
+template<uint8_t inport, uint8_t outport>
+using heater_bang_bang = simple_bang_bang<inport, outport, HEATER>;
+
+template<uint8_t inport, uint8_t outport>
+using cooler_bang_bang = simple_bang_bang<inport, outport, COOLER>;
 
 #endif //HUMIDITY_H

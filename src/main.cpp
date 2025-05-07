@@ -2,31 +2,57 @@
 #include <LiquidCrystal.h>
 #include <simple_bang_bang.h>
 
-#include "greenhouse.h"
+#include "controller_composite.h"
+
+#define D0 0
+#define D1 1
+#define D2 2
+#define D3 3
+#define D4 4
+#define D5 5
+#define D6 6
+#define D7 7
+#define D8 8
+#define D9 9
+#define D10 10
+#define D11 11
+#define D12 12
+#define D13 13
+#define D14 14
+#define D15 15
+
 
 // Initialize the LCD (RS, E, D4, D5, D6, D7)
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+LiquidCrystal lcd(D12, D11, D5, D4, D3, D2);
 
-// Define analog input pin
-const int humidityPin = A0;
-const int photoPin = A1;
+using humidity = heater_bang_bang<A0, D6>;
+using light = heater_bang_bang<A1, D7>;
 
-#define D6 6
+controller_composite<
+        humidity,
+        light
+> controllers;
 
 void setup() {
     Serial.begin(115200, SERIAL_8N1);
     lcd.begin(16, 2); // 16 columns, 2 rows
     lcd.print("Analog Value:");
 
-    // pinMode(motorPin, OUTPUT);
+    controllers.at<humidity>().initialize(
+            "Humidity", 50, 100);
+
+    controllers.at<light>().initialize(
+            "Humidity", 50, 100);
+
+
 }
 
 template<typename T>
 void print_line(T text, int line) {
-    lcd.setCursor(0, line); // Move to second line
-    lcd.print("                "); // Clear previous reading
-    lcd.setCursor(0, line); // Reset cursor again
-    lcd.print(text); // Print the new reading
+    lcd.setCursor(0, line);         // Move to second line
+    lcd.print("                ");  // Clear previous reading
+    lcd.setCursor(0, line);         // Reset cursor again
+    lcd.print(text);                // Print the new reading
 }
 
 void print_title(const char *title) {
@@ -38,28 +64,7 @@ void print_value(T value) {
     print_line(value, 1);
 }
 
-
-
-
-using humidity  = simple_bang_bang<A0, D6, true>;
-using light  = simple_bang_bang<A0, D6, true>;
-
-greenhouse<humidity> gh;
-
 void loop() {
-    // hum.update();
-
-    print_title("Humidity:");
-
-    delay(1000);
-
-    int photoValue = analogRead(photoPin);
-    print_title("Lighting:");
-    print_value(photoValue);
-
-    Serial.print("lighting :");
-    Serial.println(photoValue);
-
-
+    controllers.update();
     delay(1000);
 }

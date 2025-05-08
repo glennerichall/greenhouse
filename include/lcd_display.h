@@ -29,10 +29,6 @@ public:
     void initialize() override {
         lcd.begin(cols, rows);
     }
-
-    void print_state(const controller &) override {
-
-    }
 };
 
 template<uint8_t rs, uint8_t enable,

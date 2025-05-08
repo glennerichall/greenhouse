@@ -1,14 +1,13 @@
 #include <Arduino.h>
 #include "greenhouse.h"
 
-greenhouse *gh;
+greenhouse gh;
 
 void setup() {
     Serial.begin(115200, SERIAL_8N1);
-    gh = new greenhouse();
-    gh->initialize();
+    gh.initialize();
 }
 
 void loop() {
-    gh->update();
+    gh.update();
 }

@@ -9,8 +9,6 @@ struct controller;
 
 struct display {
 public:
-    virtual void print_state(const controller &ctrl) = 0;
-
     virtual void initialize() = 0;
 
     virtual ~display() = default;

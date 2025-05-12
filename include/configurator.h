@@ -5,8 +5,12 @@
 #ifndef GREENHOUSE_CONFIGURATOR_H
 #define GREENHOUSE_CONFIGURATOR_H
 
+#include <Arduino.h>
+
 struct display;
 struct controller;
+
+
 
 struct configurator {
 public:

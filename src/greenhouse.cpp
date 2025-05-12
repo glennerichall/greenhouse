@@ -5,11 +5,11 @@
 #include "greenhouse.h"
 
 void greenhouse::update() {
-    if (_configurator.is_active()) {
-        _configurator.config(_display, _controllers);
-    } else {
+//    if (_configurator.is_active()) {
+//        _configurator.config(_display, _controllers);
+//    } else {
         _controllers.update();
-    }
+//    }
     delay(1000);
 }
 

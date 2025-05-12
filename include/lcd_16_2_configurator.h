@@ -11,9 +11,9 @@ struct controller;
 
 #include <etl/array.h>
 
-struct lc2_16_2_configurator {
+struct lcd_16_2_configurator {
 private:
-    etl::array<uint8_t> buttons;
+//    etl::array<uint8_t> buttons;
 public:
 
     void sense();

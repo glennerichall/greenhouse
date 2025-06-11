@@ -1,18 +1,28 @@
 #pragma once
 #include <EnableInterrupt.h>
+#include <timer.h>
 
-#define USE_TIMER_1     true
+// // Select the timers you're using, here ITimer1
+// #define USE_TIMER_1     true
+// #define USE_TIMER_2     false
+// #define USE_TIMER_3     false
+// #define USE_TIMER_4     false
+// #define USE_TIMER_5     false
+//
+// #include <TimerInterrupt.h>
+// #include <ISR_Timer.h>
+//
+// ISR_Timer timer;
 
-#include <TimerInterrupt.h>
 #include <etl/platform.h>
 
-template<uint8_t pin>
+template<uint8_t pin, decltype(LOW) active_state = LOW>
 unsigned long active_duration() {
     static volatile unsigned long last_time = 0;
     auto state = digitalRead(pin);
 
-    if (state) {
-       return millis() - last_time;
+    if (state == active_state) {
+        return millis() - last_time;
     } else {
         last_time = millis();
     }
@@ -23,53 +33,43 @@ unsigned long active_duration() {
 template<uint8_t pin>
 class PinInterrupt {
 public:
-    static void begin(unsigned long holdDuration = 3000) {
+    static void begin(unsigned long holdDuration = 1000) {
         duration = holdDuration;
-        timerActive = false;
         pinMode(pin, INPUT_PULLUP);
         enableInterrupt(pin, isr, CHANGE);
-        ITimer.init();
     }
 
     static void handle(); // user-defined per-pin behavior
 
 private:
     static volatile unsigned long duration;
-    static volatile bool timerActive;
-    static TimerInterrupt ITimer;
+    static volatile  timeout_id;
 
     static void isr() {
         bool state = digitalRead(pin);
-
         active_duration<pin>();
 
-        if (state) {
-            // Pin HIGH → start timer
-            if (!timerActive) {
-                ITimer.attachInterruptInterval(duration * 1000UL, onTimeout);
-                timerActive = true;
-            }
+        if (state == LOW) {
+            timeout_id = timer::set_timeout_sync(onTimeout, duration);
+            Serial.println("starting timeout");
         } else {
-            // Pin LOW → cancel timer
-            ITimer.detachInterrupt();
-            timerActive = false;
+            timer::remove_timeout_sync(timeout_id);
         }
     }
 
     static void onTimeout() {
-        // Check pin still HIGH before handling
-        if (digitalRead(pin)) {
+        Serial.println("onTimeout");
+        // Check pin still LOW before handling
+        if (digitalRead(pin) == LOW) {
             handle();
         }
-        timerActive = false;
+        timer_active = false;
     }
 };
 
-template<uint8_t pin>
-TimerInterrupt PinInterrupt<pin>::ITimer;
 
 template<uint8_t pin>
 volatile unsigned long PinInterrupt<pin>::duration;
 
 template<uint8_t pin>
-volatile bool PinInterrupt<pin>::timerActive;
+volatile bool PinInterrupt<pin>::timer_active = false;
